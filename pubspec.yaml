@@ -1,0 +1,44 @@
+name: calculator
+description: "A new Flutter project."
+
+publish_to: 'none'
+
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.2
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  firebase_core: ^3.6.0
+  firebase_database: ^11.1.4
+  firebase_storage: ^12.3.2
+  image_picker: ^1.0.0
+  path_provider: ^2.1.4
+  collection: ^1.18.0
+  http_parser: ^4.0.2
+  leak_tracker: ^10.0.5
+  leak_tracker_flutter_testing: ^3.0.5
+  material_color_utilities : ^0.11.1
+  meta: ^1.15.0
+  mime: ^1.0.6
+  stack_trace: ^1.11.1
+  string_scanner: ^1.2.0
+  test_api: ^0.7.2
+  vm_service: ^14.2.5
+  intl: ^0.18.0
+  dio: ^5.3.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+
+flutter:
+
+  uses-material-design: true
+
