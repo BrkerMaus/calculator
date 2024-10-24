@@ -45,7 +45,7 @@ Patch Notes:
 -Users can create chat rooms and join chat rooms
 -Users can edit chat room's image, name, and password
 -Users can share chat rooms by copying the group id and password
--Users can join chat rooms by group id and password
+-Users can join chat rooms by group id and password 
 
 ## Getting Started
 
