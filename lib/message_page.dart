@@ -321,7 +321,7 @@ class _MessagePageState extends State<MessagePage> {
                         contentPadding: EdgeInsets.symmetric(horizontal: 10),
                       ),
                       onSubmitted: (value) {
-                        _sendMessage();
+                        _sendMessage;
                       },
                     ),
                   ),
