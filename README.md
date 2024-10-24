@@ -7,6 +7,7 @@ Version 1.2 (Alpha)
 # Version History:
 Version 1.0 (Pre-Alpha)
 - 02/10/2024
+
 Patch Notes:
 - Added Login Functions
 - Allowed user to send messages and read messages
@@ -15,6 +16,7 @@ Patch Notes:
 
 Version 1.0 (Pre-Alpha)
 - 05/10/2024
+
 Patch Notes:
 - Added feature that allow user to send images
 - Change the layout of the messages and viewing of image
@@ -22,6 +24,7 @@ Patch Notes:
 
 Version 1.1 (Alpha)
 - 24/10/2024
+
 Patch Notes:
 - Change the layout and design of the whole app
 - Added a simple 2d Pong game as background design for logging in
@@ -35,11 +38,13 @@ Patch Notes:
 
 Version 1.1 (Alpha)
 - 24/10/2024
+
 Patch Notes:
 - Fixed Missing Icons
 
 Version 1.2 (Alpha)
 - 24/10/2024
+
 Patch Notes:
 - Added chat room functionalities
 - Users can create chat rooms and join chat rooms
