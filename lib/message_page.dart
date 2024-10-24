@@ -32,7 +32,8 @@ class _MessagePageState extends State<MessagePage> {
   @override
   void initState() {
     super.initState();
-    _messagesRef = FirebaseDatabase.instance.ref('groups/${widget.groupId}/messages');
+    _messagesRef =
+        FirebaseDatabase.instance.ref('groups/${widget.groupId}/messages');
     _fetchMessages();
   }
 
@@ -59,7 +60,9 @@ class _MessagePageState extends State<MessagePage> {
       final messageData = {
         'username': widget.username,
         'message': _messageController.text,
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'timestamp': DateTime
+            .now()
+            .millisecondsSinceEpoch,
       };
 
       _messagesRef.push().set(messageData).then((_) {
@@ -70,7 +73,8 @@ class _MessagePageState extends State<MessagePage> {
   }
 
   Future<void> _pickImage() async {
-    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery);
 
     if (pickedFile != null) {
       final bytes = await pickedFile.readAsBytes();
@@ -79,7 +83,9 @@ class _MessagePageState extends State<MessagePage> {
       await _messagesRef.push().set({
         'username': widget.username,
         'image': base64Image,
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
+        'timestamp': DateTime
+            .now()
+            .millisecondsSinceEpoch,
       });
     }
   }
@@ -105,8 +111,14 @@ class _MessagePageState extends State<MessagePage> {
                 children: [
                   Container(
                     constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width * 0.9,
-                      maxHeight: MediaQuery.of(context).size.height * 0.7,
+                      maxWidth: MediaQuery
+                          .of(context)
+                          .size
+                          .width * 0.9,
+                      maxHeight: MediaQuery
+                          .of(context)
+                          .size
+                          .height * 0.7,
                     ),
                     child: Image.memory(
                       base64Decode(base64Image),
@@ -154,7 +166,8 @@ class _MessagePageState extends State<MessagePage> {
               child: Text('Save'),
               onPressed: () {
                 if (newGroupName.isNotEmpty) {
-                  FirebaseDatabase.instance.ref('groups/${widget.groupId}/groupdetail')
+                  FirebaseDatabase.instance.ref(
+                      'groups/${widget.groupId}/groupdetail')
                       .update({'groupName': newGroupName});
 
                   setState(() {
@@ -171,13 +184,15 @@ class _MessagePageState extends State<MessagePage> {
   }
 
   Future<void> _changeGroupImage() async {
-    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+    final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery);
 
     if (pickedFile != null) {
       final bytes = await pickedFile.readAsBytes();
       String base64Image = base64Encode(bytes);
 
-      await FirebaseDatabase.instance.ref('groups/${widget.groupId}/groupdetail')
+      await FirebaseDatabase.instance.ref(
+          'groups/${widget.groupId}/groupdetail')
           .update({'groupImage': base64Image});
 
       setState(() {
@@ -239,7 +254,9 @@ class _MessagePageState extends State<MessagePage> {
                 return Container(
                   margin: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
                   child: Column(
-                    crossAxisAlignment: isUserMessage ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+                    crossAxisAlignment: isUserMessage
+                        ? CrossAxisAlignment.end
+                        : CrossAxisAlignment.start,
                     children: [
                       Text(
                         message['username'],
@@ -252,10 +269,14 @@ class _MessagePageState extends State<MessagePage> {
                         margin: EdgeInsets.only(top: 5),
                         padding: EdgeInsets.all(8),
                         constraints: BoxConstraints(
-                          maxWidth: MediaQuery.of(context).size.width * 0.5,
+                          maxWidth: MediaQuery
+                              .of(context)
+                              .size
+                              .width * 0.5,
                         ),
                         decoration: BoxDecoration(
-                          color: isUserMessage ? Colors.blue[100] : Colors.grey[300],
+                          color: isUserMessage ? Colors.blue[100] : Colors
+                              .grey[300],
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: message['message'] != null
@@ -264,7 +285,10 @@ class _MessagePageState extends State<MessagePage> {
                             ? GestureDetector(
                           onTap: () => _viewImage(message['image']),
                           child: SizedBox(
-                            height: MediaQuery.of(context).size.height * 0.3,
+                            height: MediaQuery
+                                .of(context)
+                                .size
+                                .height * 0.3,
                             child: Image.memory(
                               base64Decode(message['image']),
                               fit: BoxFit.cover,
@@ -296,6 +320,9 @@ class _MessagePageState extends State<MessagePage> {
                         border: InputBorder.none,
                         contentPadding: EdgeInsets.symmetric(horizontal: 10),
                       ),
+                      onSubmitted: (value) {
+                        _sendMessage();
+                      },
                     ),
                   ),
                 ),
