@@ -5,24 +5,34 @@ import 'package:image_picker/image_picker.dart';
 
 class MessagePage extends StatefulWidget {
   final String username;
+  final String groupId;
+  String groupName;
+  String groupImage;
 
-  MessagePage({required this.username});
+
+  MessagePage({super.key, 
+    required this.username,
+    required this.groupId,
+    required this.groupName,
+    required this.groupImage,
+  });
 
   @override
   _MessagePageState createState() => _MessagePageState();
 }
 
 class _MessagePageState extends State<MessagePage> {
-  final DatabaseReference _messagesRef = FirebaseDatabase.instance.ref('messages');
   final TextEditingController _messageController = TextEditingController();
   List<Map<dynamic, dynamic>> _messages = [];
-  final ScrollController _scrollController = ScrollController(); // Scroll controller
+  final ScrollController _scrollController = ScrollController();
+  late final DatabaseReference _messagesRef;
+  final ImagePicker _picker = ImagePicker();
 
   @override
   void initState() {
     super.initState();
+    _messagesRef = FirebaseDatabase.instance.ref('groups/${widget.groupId}/messages');
     _fetchMessages();
-    _checkAndDeleteOldImages(); // Check for old images on startup
   }
 
   Future<void> _fetchMessages() async {
@@ -37,48 +47,10 @@ class _MessagePageState extends State<MessagePage> {
         });
 
         setState(() {
-          _messages = messagesList; // Update messages list
-        });
-
-        // Scroll to the bottom for the latest topic
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          if (_messages.isNotEmpty) {
-            _scrollToLatestTopic();
-          }
+          _messages = messagesList;
         });
       }
     });
-  }
-
-  void _scrollToLatestTopic() {
-    if (_scrollController.hasClients) {
-      _scrollController.animateTo(
-        _scrollController.position.maxScrollExtent,
-        duration: Duration(milliseconds: 300), // Duration for smooth scrolling
-        curve: Curves.easeInOut, // Animation curve for smoothness
-      );
-    }
-  }
-
-  Future<void> _pickImage() async {
-    final ImagePicker _picker = ImagePicker();
-    XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
-
-    if (pickedFile != null) {
-      // Convert image to base64 string
-      final bytes = await pickedFile.readAsBytes();
-      String base64Image = base64Encode(bytes);
-
-      // Save the base64 image to Firebase Realtime Database
-      await _messagesRef.push().set({
-        'username': widget.username,
-        'image': base64Image, // Store as base64 string
-        'timestamp': DateTime.now().millisecondsSinceEpoch,
-      });
-
-      // Scroll to the latest topic after an image is sent
-      _scrollToLatestTopic();
-    }
   }
 
   void _sendMessage() {
@@ -90,34 +62,35 @@ class _MessagePageState extends State<MessagePage> {
       };
 
       _messagesRef.push().set(messageData).then((_) {
-        _messageController.clear(); // Clear the input after sending
-
-        // Scroll to the latest topic when a new message is sent
-        _scrollToLatestTopic();
+        _messageController.clear();
+        _scrollToBottom();
       });
     }
   }
 
-  void _checkAndDeleteOldImages() {
-    _messagesRef.once().then((snapshot) {
-      final data = snapshot.snapshot.value as Map<dynamic, dynamic>?;
+  Future<void> _pickImage() async {
+    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
 
-      if (data != null) {
-        data.forEach((key, value) {
-          final timestamp = value['timestamp'] as int;
-          final DateTime messageDate = DateTime.fromMillisecondsSinceEpoch(timestamp);
-          final DateTime threeDaysAgo = DateTime.now().subtract(Duration(days: 3));
+    if (pickedFile != null) {
+      final bytes = await pickedFile.readAsBytes();
+      String base64Image = base64Encode(bytes);
 
-          if (messageDate.isBefore(threeDaysAgo)) {
-            // If the message is older than 3 days, delete it
-            _messagesRef.child(key).remove();
-          }
-        });
-      }
-    });
+      await _messagesRef.push().set({
+        'username': widget.username,
+        'image': base64Image,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
+      });
+    }
   }
 
-  // Function to view the image in full screen
+  void _scrollToBottom() {
+    _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
+  }
+
   void _viewImage(String base64Image) {
     showDialog(
       context: context,
@@ -129,22 +102,21 @@ class _MessagePageState extends State<MessagePage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  // Use MediaQuery to set maximum dimensions for the image
                   Container(
                     constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width * 0.9, // 90% of screen width
-                      maxHeight: MediaQuery.of(context).size.height * 0.8, // 80% of screen height
+                      maxWidth: MediaQuery.of(context).size.width * 0.9,
+                      maxHeight: MediaQuery.of(context).size.height * 0.7,
                     ),
                     child: Image.memory(
                       base64Decode(base64Image),
-                      fit: BoxFit.contain, // Use contain to maintain aspect ratio
+                      fit: BoxFit.contain,
                     ),
                   ),
                   SizedBox(height: 20),
                   ElevatedButton(
                     child: Text("Close"),
                     onPressed: () {
-                      Navigator.of(context).pop(); // Close the dialog
+                      Navigator.of(context).pop();
                     },
                   ),
                 ],
@@ -156,39 +128,150 @@ class _MessagePageState extends State<MessagePage> {
     );
   }
 
+  void _changeGroupName() {
+    String newGroupName = '';
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Change Group Name'),
+          content: TextField(
+            onChanged: (value) {
+              newGroupName = value;
+            },
+            decoration: InputDecoration(hintText: "Enter new group name"),
+          ),
+          actions: [
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Save'),
+              onPressed: () {
+                if (newGroupName.isNotEmpty) {
+                  FirebaseDatabase.instance.ref('groups/${widget.groupId}/groupdetail')
+                      .update({'groupName': newGroupName});
+
+                  setState(() {
+                    widget.groupName = newGroupName;
+                  });
+                }
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _changeGroupImage() async {
+    final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+
+    if (pickedFile != null) {
+      final bytes = await pickedFile.readAsBytes();
+      String base64Image = base64Encode(bytes);
+
+      await FirebaseDatabase.instance.ref('groups/${widget.groupId}/groupdetail')
+          .update({'groupImage': base64Image});
+
+      setState(() {
+        widget.groupImage = base64Image;
+      });
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('User: ${widget.username}'),
+        title: Row(
+          children: [
+            CircleAvatar(
+              backgroundImage: widget.groupImage.isNotEmpty
+                  ? MemoryImage(base64Decode(widget.groupImage))
+                  : AssetImage('assets/default.png') as ImageProvider,
+            ),
+            SizedBox(width: 10),
+            Text(widget.groupName),
+          ],
+        ),
         centerTitle: true,
-        backgroundColor: Color(0xFFCC1E4A),
+        actions: [
+          PopupMenuButton<String>(
+            onSelected: (value) {
+              if (value == 'changeName') {
+                _changeGroupName();
+              } else if (value == 'changeImage') {
+                _changeGroupImage();
+              }
+            },
+            itemBuilder: (BuildContext context) {
+              return [
+                PopupMenuItem(
+                  value: 'changeName',
+                  child: Text('Change Group Name'),
+                ),
+                PopupMenuItem(
+                  value: 'changeImage',
+                  child: Text('Change Group Image'),
+                ),
+              ];
+            },
+          ),
+        ],
       ),
       body: Column(
         children: [
           Expanded(
             child: ListView.builder(
-              controller: _scrollController, // Assign the scroll controller
+              controller: _scrollController,
               itemCount: _messages.length,
               itemBuilder: (context, index) {
                 final message = _messages[index];
-                return ListTile(
-                  title: Text(
-                    message['username'],
-                    style: TextStyle(fontWeight: FontWeight.bold),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                bool isUserMessage = message['username'] == widget.username;
+
+                return Container(
+                  margin: EdgeInsets.symmetric(vertical: 5, horizontal: 10),
+                  child: Column(
+                    crossAxisAlignment: isUserMessage ? CrossAxisAlignment.end : CrossAxisAlignment.start,
                     children: [
-                      if (message.containsKey('message')) Text(message['message']),
-                      if (message.containsKey('image'))
-                        GestureDetector(
-                          onTap: () => _viewImage(message['image']),
-                          child: Image.memory(
-                            base64Decode(message['image']),
-                            width: 300,
-                          ),
+                      Text(
+                        message['username'],
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: isUserMessage ? Colors.blue : Colors.black,
                         ),
+                      ),
+                      Container(
+                        margin: EdgeInsets.only(top: 5),
+                        padding: EdgeInsets.all(8),
+                        constraints: BoxConstraints(
+                          maxWidth: MediaQuery.of(context).size.width * 0.5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isUserMessage ? Colors.blue[100] : Colors.grey[300],
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: message['message'] != null
+                            ? Text(message['message'] ?? '')
+                            : message['image'] != null
+                            ? GestureDetector(
+                          onTap: () => _viewImage(message['image']),
+                          child: SizedBox(
+                            height: MediaQuery.of(context).size.height * 0.3,
+                            child: Image.memory(
+                              base64Decode(message['image']),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        )
+                            : SizedBox.shrink(),
+                      ),
                     ],
                   ),
                 );
@@ -200,26 +283,28 @@ class _MessagePageState extends State<MessagePage> {
             child: Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _messageController,
-                    decoration: InputDecoration(
-                      labelText: 'Type a message...',
-                      border: OutlineInputBorder(),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(8),
                     ),
-                    onSubmitted: (value) {
-                      _sendMessage(); // Send the message when Enter is pressed
-                    },
+                    child: TextField(
+                      controller: _messageController,
+                      decoration: InputDecoration(
+                        hintText: "Type your message...",
+                        border: InputBorder.none,
+                        contentPadding: EdgeInsets.symmetric(horizontal: 10),
+                      ),
+                    ),
                   ),
                 ),
                 IconButton(
                   icon: Icon(Icons.send),
                   onPressed: _sendMessage,
-                  color: Color(0xFFCC1E4A),
                 ),
                 IconButton(
-                  icon: Icon(Icons.add_a_photo),
+                  icon: Icon(Icons.photo),
                   onPressed: _pickImage,
-                  color: Color(0xFFCC1E4A),
                 ),
               ],
             ),

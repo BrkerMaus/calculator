@@ -2,12 +2,13 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'firebase_options.dart';
-import '../message_page.dart';
-
+import 'package:google_fonts/google_fonts.dart';
+import '../message_menu.dart';
+import 'pong_background.dart';
 
 FirebaseDatabase database = FirebaseDatabase.instance;
 
-void main() async{
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -16,6 +17,8 @@ void main() async{
 }
 
 class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
@@ -29,6 +32,8 @@ class MyApp extends StatelessWidget {
 }
 
 class LoginPage extends StatefulWidget {
+  const LoginPage({super.key});
+
   @override
   _LoginPageState createState() => _LoginPageState();
 }
@@ -37,173 +42,202 @@ class _LoginPageState extends State<LoginPage> {
   final _userController = TextEditingController();
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+  bool _isLoading = false;
 
   void _login() async {
     if (_formKey.currentState!.validate()) {
+      setState(() {
+        _isLoading = true;
+      });
+
       String enteredUsername = _userController.text;
       String enteredPassword = _passwordController.text;
 
-      // Reference to the Firebase Realtime Database
       DatabaseReference userRef = FirebaseDatabase.instance.ref('users/$enteredUsername');
 
       try {
-        // Fetch the data for the entered username
         DataSnapshot snapshot = await userRef.get();
 
         if (snapshot.exists) {
           Map userData = snapshot.value as Map;
 
           String storedUsername = userData['username'];
-          String storedPassword = userData['password'].toString(); // Convert to String
+          String storedPassword = userData['password'].toString();
 
-          // Compare entered credentials with the stored ones
           if (enteredUsername == storedUsername && enteredPassword == storedPassword) {
-            // Successful login
             ScaffoldMessenger.of(context).showSnackBar(SnackBar(
               content: Text('Login successful!'),
               backgroundColor: Colors.green,
             ));
 
-            // Navigate to the UserHomePage, passing the username
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => MessagePage(username: storedUsername)),
+              MaterialPageRoute(builder: (context) => MessageMenu(username: storedUsername)),
             );
           } else {
-            // Incorrect password
-            ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-              content: Text('Invalid username or password'),
-              backgroundColor: Colors.red,
-            ));
+            _showErrorDialog('Invalid username or password');
           }
         } else {
-          // User doesn't exist
-          ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-            content: Text('User not found'),
-            backgroundColor: Colors.red,
-          ));
+          _showErrorDialog('User not found');
         }
       } catch (e) {
-        // Handle errors
         print('Error: $e');
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
-          content: Text('An error occurred during login'),
-          backgroundColor: Colors.red,
-        ));
+        _showErrorDialog('An error occurred during login');
       }
+
+      setState(() {
+        _isLoading = false;
+      });
     }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Text('Error', style: GoogleFonts.poppins(fontSize: 20, color: Colors.redAccent)),
+          content: Text(message, style: GoogleFonts.poppins(fontSize: 16)),
+          actions: <Widget>[
+            TextButton(
+              child: Text('OK', style: TextStyle(color: Color(0xFF121F45))),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Center(child: Text(
-          'Calculator',
-          style: TextStyle(color: Color(0xFFCC1E4A)), // Change font color to white or any color you prefer
-        )),
-        toolbarHeight: kToolbarHeight,
-      ),
-      body: SingleChildScrollView(
-        child: Center(
-          child: Container(
-            width: 400, // Set the desired width
-            child: Card(
-              color: Color(0xFF121F45),
-              elevation: 5,
-              child: Padding(
-                padding: const EdgeInsets.all(16.0),
-                child: Container(
-                  color: Color(0xFF121F45), // Set the inner padding color
-                  padding: EdgeInsets.all(16.0), // Inner padding
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextFormField(
-                          controller: _userController,
-                          decoration: InputDecoration(
-                            labelText: 'Username',
-                            labelStyle: TextStyle(color: Color(0xFFFFC906)), // Set label color
-                            floatingLabelStyle: TextStyle(color: Color(0xFFFFC906)), // Label color when focused
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30), // Circular border
-                              borderSide: BorderSide(color: Color(0xFFFFC906)),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30), // Circular border
-                              borderSide: BorderSide(color: Color(0xFFFFC906)), // Set the enabled border color
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30), // Circular border when focused
-                              borderSide: BorderSide(color: Color(0xFFFFC906)), // Set the focused border color
-                            ),
+      body: Stack(
+        children: [
+          PongBackground(),
+          Container(
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Colors.transparent, Colors.transparent],
+              ),
+            ),
+            child: SafeArea(
+              child: Center(
+                child: SingleChildScrollView(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        double maxWidth = constraints.maxWidth < 600
+                            ? constraints.maxWidth * 0.9
+                            : 400;
+
+                        return Card(
+                          elevation: 10,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(24),
                           ),
-                          style: TextStyle(color: Color(0xFFFFC906)), // Set the font color
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your username';
-                            }
-                            return null;
-                          },
-                        ),
-                        SizedBox(height: 16),
-                        TextFormField(
-                          controller: _passwordController,
-                          decoration: InputDecoration(
-                            labelText: 'Password',
-                            labelStyle: TextStyle(color: Color(0xFFFFC906)), // Set label color
-                            floatingLabelStyle: TextStyle(color: Color(0xFFFFC906)), // Label color when focused
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30), // Circular border
-                              borderSide: BorderSide(color: Color(0xFFFFC906)),
-                            ),
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30), // Circular border
-                              borderSide: BorderSide(color: Color(0xFFFFC906)), // Set the enabled border color
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(30), // Circular border when focused
-                              borderSide: BorderSide(color: Color(0xFFFFC906)), // Set the focused border color
-                            ),
-                          ),
-                          style: TextStyle(color: Color(0xFFFFC906)), // Set the font color
-                          obscureText: true,
-                          validator: (value) {
-                            if (value == null || value.isEmpty) {
-                              return 'Please enter your password';
-                            }
-                            return null;
-                          },
-                        ),
-                        SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _login,
-                          child: Text(
-                            'Login',
-                            style: TextStyle(color: Colors.white), // Change font color to white or any color you prefer
-                          ),
-                          style: ButtonStyle(
-                            backgroundColor: MaterialStateProperty.all(Color(0xFFCC1E4A)), // Set the button color
-                            minimumSize: MaterialStateProperty.all(Size(double.infinity, 40)), // Minimum size
-                            elevation: MaterialStateProperty.all(5), // Add shadow effect
-                            shadowColor: MaterialStateProperty.all(Colors.black.withOpacity(0.5)), // Shadow color and opacity
-                            shape: MaterialStateProperty.all(
-                              RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30), // Rounded corners
+                          child: Container(
+                            width: maxWidth,
+                            padding: const EdgeInsets.all(32.0),
+                            child: Form(
+                              key: _formKey,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    'Login',
+                                    style: GoogleFonts.poppins(
+                                      fontSize: 28,
+                                      fontWeight: FontWeight.bold,
+                                      color: Color(0xFF121F45),
+                                    ),
+                                  ),
+                                  SizedBox(height: 32),
+                                  TextFormField(
+                                    controller: _userController,
+                                    decoration: InputDecoration(
+                                      labelText: 'Username',
+                                      prefixIcon: Icon(Icons.person, color: Color(0xFFCC1E4A)),
+                                      filled: true,
+                                      fillColor: Colors.grey[100],
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        borderSide: BorderSide(color: Color(0xFFFFC906), width: 2),
+                                      ),
+                                    ),
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Please enter your username';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  SizedBox(height: 24),
+                                  TextFormField(
+                                    controller: _passwordController,
+                                    decoration: InputDecoration(
+                                      labelText: 'Password',
+                                      prefixIcon: Icon(Icons.lock, color: Color(0xFFCC1E4A)),
+                                      filled: true,
+                                      fillColor: Colors.grey[100],
+                                      border: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        borderSide: BorderSide.none,
+                                      ),
+                                      focusedBorder: OutlineInputBorder(
+                                        borderRadius: BorderRadius.circular(16),
+                                        borderSide: BorderSide(color: Color(0xFFFFC906), width: 2),
+                                      ),
+                                    ),
+                                    obscureText: true,
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Please enter your password';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  SizedBox(height: 32),
+                                  ElevatedButton(
+                                    onPressed: _isLoading ? null : _login,
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Color(0xFFCC1E4A),
+                                      padding: EdgeInsets.symmetric(horizontal: 40, vertical: 16),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(30),
+                                      ),
+                                      elevation: 8,
+                                      shadowColor: Colors.black54,
+                                    ),
+                                    child: _isLoading
+                                        ? CircularProgressIndicator(color: Colors.white)
+                                        : Text(
+                                      'Login',
+                                      style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
                           ),
-                        ),
-                      ],
+                        );
+                      },
                     ),
                   ),
                 ),
               ),
             ),
           ),
-        ),
+        ],
       ),
     );
   }
