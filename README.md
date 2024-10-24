@@ -1,7 +1,7 @@
 # calculator
 
 Current version
--Version 1.0 (Alpha)
+-Version 1.11 (Alpha)
 --24/10/2024
 
 Version History:
@@ -22,6 +22,7 @@ Patch Notes:
 
 -Version 1.1 (Alpha)
 --24/10/2024
+Patch Notes:
 -Change the layout and design of the whole app
 -Added a simple 2d Pong game as background design for logging in
 -Change the Login Form Design
@@ -31,6 +32,11 @@ Patch Notes:
 -Each chat rooms' image and name are changeable by users
 -Messages design are now with color coding depending on the sender and receiver
 -Improved the UI of the Message by changing the structure of the chat
+
+-Version 1.1 (Alpha)
+--24/10/2024
+Patch Notes:
+-Fixed Missing Icons
 
 ## Getting Started
 
