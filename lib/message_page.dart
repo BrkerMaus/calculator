@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 class MessagePage extends StatefulWidget {
   final String username;
@@ -299,17 +300,11 @@ class _MessagePageState extends State<MessagePage> {
                   ),
                 ),
                 IconButton(
-                  icon: ImageIcon(
-                    AssetImage('assets/icons/paper-plane.png'),
-                    color: Colors.blue,
-                  ),
+                  icon: Icon(Icons.send, color: Colors.blue),
                   onPressed: _sendMessage,
                 ),
                 IconButton(
-                  icon: ImageIcon(
-                    AssetImage('assets/icons/pic.png'),
-                    color: Colors.green,
-                  ),
+                  icon: Icon(Icons.photo, color: Colors.green),
                   onPressed: _pickImage,
                 ),
               ],
