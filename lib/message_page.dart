@@ -10,7 +10,7 @@ class MessagePage extends StatefulWidget {
   String groupImage;
 
 
-  MessagePage({super.key, 
+  MessagePage({super.key,
     required this.username,
     required this.groupId,
     required this.groupName,
@@ -299,13 +299,14 @@ class _MessagePageState extends State<MessagePage> {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.send),
+                  icon: Icon(Icons.send, color: Colors.blue),
                   onPressed: _sendMessage,
                 ),
                 IconButton(
-                  icon: Icon(Icons.photo),
+                  icon: Icon(Icons.photo, color: Colors.green),
                   onPressed: _pickImage,
                 ),
+
               ],
             ),
           ),
