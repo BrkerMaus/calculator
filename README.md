@@ -1,7 +1,7 @@
 # calculator
 
 Current version
--Version 1.11 (Alpha)
+-Version 1.2 (Alpha)
 --24/10/2024
 
 Version History:
@@ -37,6 +37,15 @@ Patch Notes:
 --24/10/2024
 Patch Notes:
 -Fixed Missing Icons
+
+-Version 1.2 (Alpha)
+--24/10/2024
+Patch Notes:
+-Added chat room functionalities
+-Users can create chat rooms and join chat rooms
+-Users can edit chat room's image, name, and password
+-Users can share chat rooms by copying the group id and password
+-Users can join chat rooms by group id and password
 
 ## Getting Started
 

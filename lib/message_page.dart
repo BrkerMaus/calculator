@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter/services.dart'; // Import for Clipboard
 
 class MessagePage extends StatefulWidget {
   final String username;
@@ -10,8 +10,8 @@ class MessagePage extends StatefulWidget {
   String groupName;
   String groupImage;
 
-
-  MessagePage({super.key,
+  MessagePage({
+    super.key,
     required this.username,
     required this.groupId,
     required this.groupName,
@@ -24,6 +24,7 @@ class MessagePage extends StatefulWidget {
 
 class _MessagePageState extends State<MessagePage> {
   final TextEditingController _messageController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController(); // Controller for new password
   List<Map<dynamic, dynamic>> _messages = [];
   final ScrollController _scrollController = ScrollController();
   late final DatabaseReference _messagesRef;
@@ -60,9 +61,7 @@ class _MessagePageState extends State<MessagePage> {
       final messageData = {
         'username': widget.username,
         'message': _messageController.text,
-        'timestamp': DateTime
-            .now()
-            .millisecondsSinceEpoch,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
       };
 
       _messagesRef.push().set(messageData).then((_) {
@@ -83,9 +82,7 @@ class _MessagePageState extends State<MessagePage> {
       await _messagesRef.push().set({
         'username': widget.username,
         'image': base64Image,
-        'timestamp': DateTime
-            .now()
-            .millisecondsSinceEpoch,
+        'timestamp': DateTime.now().millisecondsSinceEpoch,
       });
     }
   }
@@ -111,14 +108,8 @@ class _MessagePageState extends State<MessagePage> {
                 children: [
                   Container(
                     constraints: BoxConstraints(
-                      maxWidth: MediaQuery
-                          .of(context)
-                          .size
-                          .width * 0.9,
-                      maxHeight: MediaQuery
-                          .of(context)
-                          .size
-                          .height * 0.7,
+                      maxWidth: MediaQuery.of(context).size.width * 0.9,
+                      maxHeight: MediaQuery.of(context).size.height * 0.7,
                     ),
                     child: Image.memory(
                       base64Decode(base64Image),
@@ -201,6 +192,83 @@ class _MessagePageState extends State<MessagePage> {
     }
   }
 
+  void _changeGroupPassword() {
+    String newGroupPassword = '';
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Change Group Password'),
+          content: TextField(
+            controller: _passwordController,
+            onChanged: (value) {
+              newGroupPassword = value;
+            },
+            decoration: InputDecoration(hintText: "Enter new group password"),
+            obscureText: true, // To hide the password input
+          ),
+          actions: [
+            TextButton(
+              child: Text('Cancel'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: Text('Save'),
+              onPressed: () {
+                if (newGroupPassword.isNotEmpty) {
+                  FirebaseDatabase.instance.ref(
+                      'groups/${widget.groupId}/groupdetail')
+                      .update({'groupPassword': newGroupPassword});
+
+                  // Optionally, you can clear the password field after saving
+                  _passwordController.clear();
+                }
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _copyGroupId() {
+    Clipboard.setData(ClipboardData(text: widget.groupId)).then((_) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Group ID copied to clipboard!')),
+      );
+    });
+  }
+
+  void _copyGroupPassword() {
+    FirebaseDatabase.instance
+        .ref('groups/${widget.groupId}/groupdetail/groupPassword')
+        .get()
+        .then((DataSnapshot snapshot) {
+      if (snapshot.exists) {
+        String groupPassword = snapshot.value as String;
+        Clipboard.setData(ClipboardData(text: groupPassword)).then((_) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Group password copied to clipboard!')),
+          );
+        });
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Group password not found.')),
+        );
+      }
+    });
+  }
+
+
+
+
+
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -224,6 +292,12 @@ class _MessagePageState extends State<MessagePage> {
                 _changeGroupName();
               } else if (value == 'changeImage') {
                 _changeGroupImage();
+              } else if (value == 'changePassword') {
+                _changeGroupPassword(); // Call to change group password
+              } else if (value == 'copyGroupId') {
+                _copyGroupId(); // Call to copy group ID
+              } else if (value == 'copyGroupPassword') {
+                _copyGroupPassword(); // Call to copy group password
               }
             },
             itemBuilder: (BuildContext context) {
@@ -235,6 +309,18 @@ class _MessagePageState extends State<MessagePage> {
                 PopupMenuItem(
                   value: 'changeImage',
                   child: Text('Change Group Image'),
+                ),
+                PopupMenuItem(
+                  value: 'changePassword',
+                  child: Text('Change Group Password'), // New menu item
+                ),
+                PopupMenuItem(
+                  value: 'copyGroupId',
+                  child: Text('Copy Group ID'), // New menu item
+                ),
+                PopupMenuItem(
+                  value: 'copyGroupPassword',
+                  child: Text('Copy Group Password'), // New menu item
                 ),
               ];
             },
@@ -269,14 +355,10 @@ class _MessagePageState extends State<MessagePage> {
                         margin: EdgeInsets.only(top: 5),
                         padding: EdgeInsets.all(8),
                         constraints: BoxConstraints(
-                          maxWidth: MediaQuery
-                              .of(context)
-                              .size
-                              .width * 0.5,
+                          maxWidth: MediaQuery.of(context).size.width * 0.5,
                         ),
                         decoration: BoxDecoration(
-                          color: isUserMessage ? Colors.blue[100] : Colors
-                              .grey[300],
+                          color: isUserMessage ? Colors.blue[100] : Colors.grey[300],
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: message['message'] != null
@@ -285,17 +367,14 @@ class _MessagePageState extends State<MessagePage> {
                             ? GestureDetector(
                           onTap: () => _viewImage(message['image']),
                           child: SizedBox(
-                            height: MediaQuery
-                                .of(context)
-                                .size
-                                .height * 0.3,
+                            height: MediaQuery.of(context).size.height * 0.3,
                             child: Image.memory(
                               base64Decode(message['image']),
                               fit: BoxFit.cover,
                             ),
                           ),
                         )
-                            : SizedBox.shrink(),
+                            : Container(),
                       ),
                     ],
                   ),

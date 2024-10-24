@@ -222,7 +222,7 @@ class _LoginPageState extends State<LoginPage> {
                                         ? CircularProgressIndicator(color: Colors.white)
                                         : Text(
                                       'Login',
-                                      style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
+                                      style: GoogleFonts.poppins(fontSize: 18, fontWeight: FontWeight.bold, color: Color(0xFFFFC906)),
                                     ),
                                   ),
                                 ],
