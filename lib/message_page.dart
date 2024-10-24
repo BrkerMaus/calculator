@@ -299,14 +299,19 @@ class _MessagePageState extends State<MessagePage> {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.send, color: Colors.blue),
+                  icon: ImageIcon(
+                    AssetImage('assets/icons/paper-plane.png'),
+                    color: Colors.blue,
+                  ),
                   onPressed: _sendMessage,
                 ),
                 IconButton(
-                  icon: Icon(Icons.photo, color: Colors.green),
+                  icon: ImageIcon(
+                    AssetImage('assets/icons/pic.png'),
+                    color: Colors.green,
+                  ),
                   onPressed: _pickImage,
                 ),
-
               ],
             ),
           ),
