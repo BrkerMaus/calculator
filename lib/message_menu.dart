@@ -125,18 +125,27 @@ class _MessageMenuState extends State<MessageMenu> {
                 ElevatedButton(
                   onPressed: () async {
                     // Pick an image from the gallery
-                    final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
-                    if (image != null) {
+                    final XFile? pickedFile = await _picker.pickImage(
+                        source: ImageSource.gallery);
+                    if (pickedFile != null) {
                       // Read the image file as bytes
-                      final bytes = await File(image.path).readAsBytes();
-                      setState(() {
-                        groupImage = base64Encode(bytes); // Convert bytes to base64 string
-                        isImageAdded = true; // Update image state to true
-                        buttonMessage = 'Picture was updated'; // Update message
-                      });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(content: Text('Picture was added')),
-                      );
+                      try {
+                        final bytes = await pickedFile.readAsBytes();
+                        String base64Image = base64Encode(bytes);
+                        setState(() {
+                          groupImage = base64Image; // Convert bytes to base64 string
+                          isImageAdded = true; // Update image state to true
+                          buttonMessage = 'Picture was updated'; // Update message
+                        });
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Picture was added')),
+                        );
+                      } catch (e) {
+                        // Handle any errors that occur during file reading
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error reading image: $e')),
+                        );
+                      }
                     }
                   },
                   child: Text(buttonMessage),
@@ -144,7 +153,6 @@ class _MessageMenuState extends State<MessageMenu> {
                     backgroundColor: isImageAdded ? Colors.green : null, // Change button color
                   ),
                 ),
-                // Show the selected image (optional)
                 if (groupImage.isNotEmpty)
                   Image.memory(
                     base64Decode(groupImage),
@@ -159,17 +167,15 @@ class _MessageMenuState extends State<MessageMenu> {
             TextButton(
               onPressed: () async {
                 if (groupName.isNotEmpty && groupPassword.isNotEmpty) {
-                  // Generate a unique groupId
                   String groupId = _generateGroupId();
-                  // Store group details in Firebase
                   await _groupsRef.child(groupId).set({
                     'groupdetail': {
                       'groupName': groupName,
                       'groupPassword': groupPassword,
-                      'groupImage': groupImage, // Save the base64 string of the image
+                      'groupImage': groupImage,
                     },
                     'groupuser': {
-                      widget.username: true, // Store the current user's username
+                      widget.username: true,
                     }
                   });
                   Navigator.pop(context);
@@ -182,6 +188,7 @@ class _MessageMenuState extends State<MessageMenu> {
       },
     );
   }
+
 
 
   Future<void> _showJoinGroupDialog() async {

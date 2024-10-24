@@ -223,7 +223,6 @@ class _MessagePageState extends State<MessagePage> {
                       'groups/${widget.groupId}/groupdetail')
                       .update({'groupPassword': newGroupPassword});
 
-                  // Optionally, you can clear the password field after saving
                   _passwordController.clear();
                 }
                 Navigator.of(context).pop();
@@ -262,11 +261,6 @@ class _MessagePageState extends State<MessagePage> {
       }
     });
   }
-
-
-
-
-
 
 
   @override
